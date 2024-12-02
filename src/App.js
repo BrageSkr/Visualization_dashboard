@@ -1,11 +1,12 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { Layout, Menu, Typography } from 'antd';
-import { GlobalOutlined, LineChartOutlined, RiseOutlined } from '@ant-design/icons';
+import {GlobalOutlined, LineChartOutlined, RiseOutlined, SearchOutlined} from '@ant-design/icons';
 import WorldMapVisualization from "./worldmap";
 import CO2Charts from "./graph_pie";
 import TrendsAndComparisons from "./trends";
 import PredictionsComponent from "./predictionPage";
+import ClimateDataComponent from "./temperaturecomp";
 
 const { Header, Content } = Layout;
 const { Title, Text } = Typography;
@@ -16,7 +17,6 @@ const MapPage = () => (
             <Title level={4} style={{ margin: 0 }}>Global CO2 Emissions</Title>
             <Text type="secondary">Interactive world map showing emissions by country</Text>
         </div>
-        <CO2Charts />
         <WorldMapVisualization />
     </div>
 );
@@ -42,6 +42,15 @@ const TrendsPage = () => (
         <TrendsAndComparisons/>
     </div>
 );
+const ExporationPage = () => (
+    <div className="bg-white p-6 rounded-lg shadow-sm">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Title level={4} style={{ margin: 0 }}>Temperature relation</Title>
+            <Text type="secondary">Global temprature and emissions</Text>
+        </div>
+        <ClimateDataComponent/>
+    </div>
+);
 
 const Dashboard = () => {
     const menuItems = [
@@ -60,6 +69,11 @@ const Dashboard = () => {
             icon: <LineChartOutlined />,
             label: <Link to="/trends">Trends</Link>,
         },
+        {
+            key: '/exporation',
+            icon: <SearchOutlined />,
+            label: <Link to="/exporation">Explore relations</Link>,
+        },
     ];
 
     return (
@@ -69,7 +83,6 @@ const Dashboard = () => {
                     <Menu
                         mode="horizontal"
                         items={menuItems}
-                        selectedKeys={[window.location.pathname]}
                         style={{ border: 'none' }}
                     />
                 </Header>
@@ -78,6 +91,7 @@ const Dashboard = () => {
                         <Route path="/" element={<MapPage />} />
                         <Route path="/predictions" element={<PredictionsPage />} />
                         <Route path="/trends" element={<TrendsPage />} />
+                        <Route path="/exporation" element={<ExporationPage />} />
                     </Routes>
                 </Content>
             </Layout>

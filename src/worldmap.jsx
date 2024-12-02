@@ -11,7 +11,7 @@ import { scaleQuantile } from 'd3-scale';
 import { feature } from "topojson-client";
 import Papa from 'papaparse';
 
-const geoUrl = "https://unpkg.com/world-atlas@2.0.2/countries-50m.json";
+const geoUrl = "https://unpkg.com/world-atlas@2.0.2/countries-110m.json";
 
 const COLOR_RANGE = [
     '#ffeda0',
@@ -90,6 +90,7 @@ const WorldMapVisualization = () => {
         { value: 'oil_co2_per_capita', label: 'Oil CO2 per Capita' },
         { value: 'cement_co2_per_capita', label: 'Cement CO2 per Capita' },
         { value: 'ghg_per_capita', label: 'GHG per Capita' },
+        { value: 'population', label: 'Population' },
     ];
 
     useEffect(() => {

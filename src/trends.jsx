@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Space, Select, Spin } from 'antd';
+import { Card, Space, Select, Spin, InputNumber, Button, Form, Row, Col } from 'antd';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from 'react-simple-maps';
 import Papa from 'papaparse';
@@ -50,6 +50,10 @@ const TrendsAndComparisons = () => {
     const [selectedCountries, setSelectedCountries] = useState([]);
     const [rawData, setRawData] = useState([]);
     const [countryData, setCountryData] = useState({});
+    const [filteredCountries, setFilteredCountries] = useState([]);
+    const [form] = Form.useForm();
+
+    const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
     const metrics = [
         { value: 'coal_co2_per_capita', label: 'Coal CO2 per Capita' },
@@ -60,10 +64,15 @@ const TrendsAndComparisons = () => {
         { value: 'oil_co2_per_capita', label: 'Oil CO2 per Capita' },
         { value: 'cement_co2_per_capita', label: 'Cement CO2 per Capita' },
         { value: 'ghg_per_capita', label: 'GHG per Capita' },
-        { value: 'population', label: 'Population' }
+        { value: 'population', label: 'Population' },
+        { value: 'gdp_per_capita', label: 'GDP per Capita' },
     ];
 
-    const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+    const filterOptions = [
+        { value: 'gdp_per_capita', label: 'GDP per Capita' },
+        { value: 'population', label: 'Population' },
+        { value: 'co2_per_capita', label: 'CO2 per Capita' }
+    ];
 
     useEffect(() => {
         const loadData = async () => {
@@ -94,6 +103,7 @@ const TrendsAndComparisons = () => {
                     }
                 });
                 setCountryData(countries);
+                setFilteredCountries(Object.values(countries).map(c => c.alpha3));
                 setLoading(false);
             } catch (error) {
                 console.error('Error loading data:', error);
@@ -121,6 +131,43 @@ const TrendsAndComparisons = () => {
             }
         });
         return Object.values(yearData).sort((a, b) => a.year - b.year);
+    };
+
+    const compareValues = (a, b, operator) => {
+        switch (operator) {
+            case '>': return a > b;
+            case '<': return a < b;
+            case '>=': return a >= b;
+            case '<=': return a <= b;
+            case '=': return a === b;
+            default: return true;
+        }
+    };
+
+    const applyFilters = (values) => {
+        const { metric, operator, value } = values;
+
+        if (!metric || !operator || value === undefined) {
+            resetFilters();
+            return;
+        }
+
+        const filtered = rawData.filter(row => {
+            if (!row.year || row.year !== 2022) return false;
+            const val = row[metric];
+            return compareValues(val, value, operator);
+        });
+
+        const filteredISOs = [...new Set(filtered.map(row => row.iso_code))];
+        setFilteredCountries(filteredISOs);
+        setSelectedCountries([]);
+    };
+
+    const resetFilters = () => {
+        form.resetFields();
+        const allCountries = Object.values(countryData).map(c => c.alpha3);
+        setFilteredCountries(allCountries);
+        setSelectedCountries([]);
     };
 
     const calculateSectorData = () => {
@@ -153,7 +200,7 @@ const TrendsAndComparisons = () => {
 
     const handleCountryClick = (geo) => {
         const countryISO = isoNumericToAlpha3[geo.id];
-        if (countryISO) {
+        if (countryISO && filteredCountries.includes(countryISO)) {
             if (selectedCountries.includes(countryISO)) {
                 setSelectedCountries(selectedCountries.filter(code => code !== countryISO));
             } else if (selectedCountries.length < 5) {
@@ -166,6 +213,9 @@ const TrendsAndComparisons = () => {
         const countryISO = isoNumericToAlpha3[geo.id];
         if (selectedCountries.includes(countryISO)) {
             return '#F88379';
+        }
+        if (filteredCountries.includes(countryISO)) {
+            return '#90EE90';
         }
         return '#D6D6DA';
     };
@@ -180,6 +230,48 @@ const TrendsAndComparisons = () => {
 
     return (
         <div className="p-4 w-full">
+            <Card title="Filter Countries" className="mb-4">
+                <Form
+                    form={form}
+                    onFinish={applyFilters}
+                    layout="horizontal"
+                >
+                    <Row gutter={16} align="bottom">
+                        <Col span={6}>
+                            <Form.Item name="metric" label="Metric">
+                                <Select options={filterOptions} />
+                            </Form.Item>
+                        </Col>
+                        <Col span={6}>
+                            <Form.Item name="operator" label="Operator">
+                                <Select options={[
+                                    { value: '>', label: '>' },
+                                    { value: '<', label: '<' },
+                                    { value: '>=', label: '>=' },
+                                    { value: '<=', label: '<=' },
+                                    { value: '=', label: '=' }
+                                ]} />
+                            </Form.Item>
+                        </Col>
+                        <Col span={6}>
+                            <Form.Item name="value" label="Value">
+                                <InputNumber style={{ width: '100%' }} />
+                            </Form.Item>
+                        </Col>
+                        <Col span={6}>
+                            <Space>
+                                <Button type="primary" htmlType="submit">
+                                    Apply Filter
+                                </Button>
+                                <Button onClick={resetFilters}>
+                                    Reset
+                                </Button>
+                            </Space>
+                        </Col>
+                    </Row>
+                </Form>
+            </Card>
+
             <div className="mb-4">
                 <Select
                     style={{ width: 200 }}
@@ -219,7 +311,7 @@ const TrendsAndComparisons = () => {
 
                 <div style={{ flex: '1 1 55%' }}>
                     <Card title="Country Comparison">
-                        <ResponsiveContainer width="100%" height={450} >
+                        <ResponsiveContainer width="100%" height={450}>
                             <BarChart data={[data[data.length - 1]]}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="year" />
@@ -246,7 +338,7 @@ const TrendsAndComparisons = () => {
                         <LineChart data={data}>
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="year" />
-                            <YAxis  mirror={true}/>
+                            <YAxis mirror={true}/>
                             <Tooltip />
                             <Legend />
                             {selectedCountries.map((country, index) => (

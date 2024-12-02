@@ -32,9 +32,7 @@ const PredictionsComponent = () => {
         { value: 'linear', label: 'Linear Regression (ML)' },
         { value: 'polynomial', label: 'Polynomial Regression (ML)' },
         { value: 'exponential', label: 'Exponential Regression (ML)' },
-        { value: 'power', label: 'Power Regression (ML)' },
-        { value: 'sma', label: 'Simple Moving Average' },
-        { value: 'ema', label: 'Exponential Moving Average' }
+        { value: 'sma', label: 'Simple Moving Average' }
     ];
 
     const continents = [
@@ -178,17 +176,7 @@ const PredictionsComponent = () => {
                     }
                     break;
                 }
-                case 'power': {
-                    const regression = new ML.PowerRegression(xValues, yValues);
-                    for (let i = 1; i <= 5; i++) {
-                        predictions.push({
-                            year: lastYear + i,
-                            predicted: regression.predict(xValues.length + i - 1),
-                            type: 'Predicted'
-                        });
-                    }
-                    break;
-                }
+
                 case 'sma': {
                     const period = 5;
                     const lastValues = historicalData.slice(-period).map(d => d.value);
@@ -203,23 +191,7 @@ const PredictionsComponent = () => {
                     }
                     break;
                 }
-                case 'ema': {
-                    const smoothingFactor = 0.2;
-                    let ema = historicalData[0].value;
 
-                    historicalData.forEach(point => {
-                        ema = (point.value * smoothingFactor) + (ema * (1 - smoothingFactor));
-                    });
-
-                    for (let i = 1; i <= 5; i++) {
-                        predictions.push({
-                            year: lastYear + i,
-                            predicted: ema,
-                            type: 'Predicted'
-                        });
-                    }
-                    break;
-                }
             }
 
             const combinedData = [
